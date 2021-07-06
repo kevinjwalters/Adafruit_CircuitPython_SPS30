@@ -52,31 +52,29 @@ class SPS30_I2C(SPS30):
 
     **Quickstart: Importing and using the SCD30**
 
-        TODO - note physical setup with grounding the interface pin
-
-        Here is an example of using the :class:`SCD30` class.
+        Here is an example of using the :class:`SPS30` class.
         First you will need to import the libraries to use the sensor
 
         .. code-block:: python
 
             import board
-            import adafruit_sps30
+            from adafruit_sps30.i2c import SPS30_I2C
 
         Once this is done you can define your `board.I2C` object and define your sensor object
+        using the i2c bus.
+        The SPS30 i2c mode is selected by grounding its interface pin.
 
         .. code-block:: python
 
             i2c = board.I2C()   # uses board.SCL and board.SDA
-            sps = adafruit_sps30.SPS30(i2c)
+            sps = SPS30_I2C(i2c)
 
-        TODO Now you have access to the CO2, temperature and humidity using
-        the :attr:`CO2`, :attr:`temperature` and :attr:`relative_humidity` attributes
+        Now you have access to the air quality data using the class function
+        `adafruit_sps30.SPS30.read`
 
         .. code-block:: python
 
-            temperature = scd.temperature
-            relative_humidity = scd.relative_humidity
-            co2_ppm_level = scd.CO2
+            aqdata = sps.read()
 
     """
 
@@ -185,7 +183,7 @@ class SPS30_I2C(SPS30):
     def _read_parse_data(self, output):
         self._scrunch_buffer(self._m_total_size)
 
-        # buffer will be longer than the data hence use of unpack_from
+        # buffer will be longer than the data hence the use of unpack_from
         for k, v in zip(self.FIELD_NAMES,
                         unpack_from(self._m_fmt, self._buffer)):
             output[k] = v
