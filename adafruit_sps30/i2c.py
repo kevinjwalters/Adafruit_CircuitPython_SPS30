@@ -5,7 +5,7 @@
 `adafruit_sps30.i2c`
 ================================================================================
 
-Helper library for the Sensirion SPS30 particulate matter sensor
+Helper library for the Sensirion SPS30 particulate matter sensor using i2c interface.
 
 
 * Author(s): Kevin J. Walters
@@ -81,7 +81,7 @@ class SPS30_I2C(SPS30):
     def __init__(self, i2c_bus, address=SPS30_DEFAULT_ADDR,
                  *,
                  auto_start=True,
-                 fp_mode=False,
+                 fp_mode=False,  # fp_mode selection is buggy, end 30 bytes are 0xff
                  delays=True):
         super().__init__()
         self._buffer = bytearray(60)  # 10*(4+2)
@@ -92,17 +92,18 @@ class SPS30_I2C(SPS30):
         self._m_size = None
         self._m_total_size = None
         self._m_fmt = None
-        self._delays = True
+        self._delays = delays
         self._set_fp_mode(fp_mode)
 
         if auto_start:
             self.start(fp_mode)
+
         self.fw_version = self._read_version()
 
-    def deininit(self):
-        self.stop()
-
     def start(self, use_floating_point=None):
+        """Send start command to the SPS30.
+           This will already have been called by constructor
+           if auto_start is left to default value."""
         request_fp = self._fp_mode if use_floating_point is None else use_floating_point
         output_format = 0x0300 if request_fp else 0x0500
         self._sps30_command(self._CMD_START_MEASUREMENT,
@@ -121,6 +122,7 @@ class SPS30_I2C(SPS30):
         self._m_fmt = ">" + ("f" if self._fp_mode else "H") * len(self.FIELD_NAMES)
 
     def stop(self):
+        """Send stop command to SPS30."""
         self._sps30_command(self._CMD_STOP_MEASUREMENT,
                             rx_size=0)
         # Data sheet states command execution time < 20ms
@@ -128,8 +130,8 @@ class SPS30_I2C(SPS30):
             time.sleep(0.020)
 
     def reset(self):
-        """Perform a soft reset on the sensor, restoring default values"""
-        self._send_command(self._CMD_SOFT_RESET)
+        """Perform a soft reset on the SPS30, restoring default values"""
+        self._sps30_command(self._CMD_SOFT_RESET)
         # Data sheet states command execution time < 100ms
         if self._delays:
             time.sleep(0.100)
@@ -138,7 +140,6 @@ class SPS30_I2C(SPS30):
                        *,
                        rx_size=0, retry=SPS30.DEFAULT_RETRIES):
         """Set rx_size to None to read arbitrary amount of data up to max of _buffer size"""
-        ### TODO - implement retries
         self._cmd_buffer[0] = command >> 8
         self._cmd_buffer[1] = command & 0xFF
         tx_size = 2
@@ -163,6 +164,9 @@ class SPS30_I2C(SPS30):
             if rx_size != 0:
                 i2c.readinto(self._buffer, end=rx_size)
 
+        if retry:
+            pass # implement retries with appropriate exception handling
+
     def _read_version(self):
         self._sps30_command(self._CMD_READ_VERSION, rx_size=3)
         self._buffer_check(3)
@@ -184,9 +188,9 @@ class SPS30_I2C(SPS30):
         self._scrunch_buffer(self._m_total_size)
 
         # buffer will be longer than the data hence the use of unpack_from
-        for k, v in zip(self.FIELD_NAMES,
+        for key, val in zip(self.FIELD_NAMES,
                         unpack_from(self._m_fmt, self._buffer)):
-            output[k] = v
+            output[key] = val
 
     def _buffer_check(self, raw_data_len):
         if raw_data_len % 3 != 0:

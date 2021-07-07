@@ -5,7 +5,7 @@
 `adafruit_sps30.uart`
 ================================================================================
 
-Helper library for the Sensirion SPS30 particulate matter sensor
+Helper library for the Sensirion SPS30 particulate matter sensor using UART interface.
 
 
 * Author(s): Kevin J. Walters
@@ -59,7 +59,7 @@ class SPS30_UART:
                 time.sleep(1)
 
     """
-
+    # pylint: disable=too-few-public-methods
     def __init__(self, uart):
 
         super().__init__()
@@ -67,3 +67,12 @@ class SPS30_UART:
         self._buffer = bytearray(40)  # 10*4
 
         self._uart = uart
+        raise NotImplementedError("Not yet implemented...")
+
+    def _read_into_buffer(self):
+        """Low level buffer filling function, to be overridden"""
+        raise NotImplementedError("Not yet implemented...")
+
+    def _read_parse_data(self, output):
+        """Low level buffer parsing function, to be overridden"""
+        raise NotImplementedError("Not yet implemented...")
