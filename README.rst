@@ -66,7 +66,7 @@ Usage Example
     import board
     from adafruit_sps30.i2c import SPS30_I2C
 
-    # For i2c mode interface pin on SPS30 needs to be connected to ground
+    # For i2c mode the SPS30 interface select pin needs to be connected to ground
     i2c = board.I2C()   # uses board.SCL and board.SDA
     sps = SPS30_I2C(i2c)
 

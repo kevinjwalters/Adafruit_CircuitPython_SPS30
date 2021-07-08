@@ -5,7 +5,7 @@
 """
 Example program for Sensirion SPS30 using i2c.
 
-Reminder: interface pin on SPS30 needs to be connected to ground for i2c mode.
+Reminder: SPS30 interface select pin needs to be connected to ground for i2c mode.
 """
 
 # pylint: disable=unused-import
@@ -16,7 +16,7 @@ from adafruit_sps30.i2c import SPS30_I2C
 
 # SPS30 works up to 100kHz
 i2c = busio.I2C(board.SCL, board.SDA, frequency=100000)
-sps30 = SPS30_I2C(i2c)
+sps30 = SPS30_I2C(i2c, fp_mode=False)
 
 print("Found SPS30 sensor, reading data...")
 
@@ -33,9 +33,9 @@ while True:
     print()
     print("Concentration Units (standard)")
     print("---------------------------------------")
-    print("PM 1.0: {:d}\tPM2.5: {:d}\tPM10: {:d}".format(aqdata["pm10 standard"],
-                                                         aqdata["pm25 standard"],
-                                                         aqdata["pm100 standard"]))
+    print("PM 1.0: {}\tPM2.5: {}\tPM10: {}".format(aqdata["pm10 standard"],
+                                                   aqdata["pm25 standard"],
+                                                   aqdata["pm100 standard"]))
     print("Concentration Units (number count)")
     print("---------------------------------------")
     print("Particles 0.3-0.5um  / cm3:", aqdata["particles 05um"])
