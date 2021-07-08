@@ -62,7 +62,7 @@ class SPS30_I2C(SPS30):
 
         Once this is done you can define your `board.I2C` object and define your sensor object
         using the i2c bus.
-        The SPS30 i2c mode is selected by grounding its interface pin.
+        The SPS30 i2c mode is selected by grounding its interface select pin.
 
         .. code-block:: python
 
@@ -98,19 +98,16 @@ class SPS30_I2C(SPS30):
         if auto_start:
             self.start(fp_mode)
 
-        self.fw_version = self._read_version()
+        self.firmware_version = self.read_firmware_version()
 
     def start(self, use_floating_point=None):
         """Send start command to the SPS30.
            This will already have been called by constructor
            if auto_start is left to default value."""
         request_fp = self._fp_mode if use_floating_point is None else use_floating_point
-        # Datasheet appears to be wrong/misleading here suggesting wire
-        # data is [0x30, 0x00] and [0x50, 0x00] (order is transposed)
-        output_format = 0x0003 if request_fp else 0x0005
+        output_format = 0x0300 if request_fp else 0x0500
         self._sps30_command(self._CMD_START_MEASUREMENT,
-                            arguments=(output_format,),
-                            rx_size=0)
+                            arguments=(output_format,))
         self._set_fp_mode(request_fp)
         # Data sheet states command execution time < 20ms
         if self._delays:
@@ -118,8 +115,7 @@ class SPS30_I2C(SPS30):
 
     def stop(self):
         """Send stop command to SPS30."""
-        self._sps30_command(self._CMD_STOP_MEASUREMENT,
-                            rx_size=0)
+        self._sps30_command(self._CMD_STOP_MEASUREMENT)
         # Data sheet states command execution time < 20ms
         if self._delays:
             time.sleep(0.020)
@@ -130,6 +126,31 @@ class SPS30_I2C(SPS30):
         # Data sheet states command execution time < 100ms
         if self._delays:
             time.sleep(0.100)
+
+    def read_firmware_version(self):
+        """Read firmware version returning as two element tuple."""
+        self._sps30_command(self._CMD_READ_VERSION, rx_size=3)
+        self._buffer_check(3)
+        return (self._buffer[0], self._buffer[1])
+
+    def read_status_register(self):
+        """Read 32bit status register."""
+        self._sps30_command(self._CMD_READ_DEVICE_STATUS_REG, rx_size=6)
+        self._buffer_check(6)
+        self._scrunch_buffer(6)
+        return unpack_from(">I", self._buffer)[0]
+
+    def data_available(self):
+        """Boolean indicating if data is available or None for invalid response."""
+        self._sps30_command(self._CMD_DATA_READY, rx_size=3)
+        self._buffer_check(3)
+        ready = None
+        if self._buffer[1] == 0x00:
+            ready = False
+        elif self._buffer[1] == 0x01:
+            ready = True
+
+        return ready
 
 
     def _set_fp_mode(self, use_floating_point):
@@ -143,14 +164,14 @@ class SPS30_I2C(SPS30):
                        *,
                        rx_size=0, retry=SPS30.DEFAULT_RETRIES):
         """Set rx_size to None to read arbitrary amount of data up to max of _buffer size"""
-        self._cmd_buffer[0] = command >> 8
+        self._cmd_buffer[0] = (command >> 8) & 0xFF
         self._cmd_buffer[1] = command & 0xFF
         tx_size = 2
 
         # Add arguments if any
         if arguments is not None:
             for arg in arguments:
-                self._cmd_buffer[tx_size] = arg >> 8
+                self._cmd_buffer[tx_size] = (arg >> 8) & 0xFF
                 tx_size += 1
                 self._cmd_buffer[tx_size] = arg & 0xFF
                 tx_size += 1
@@ -169,11 +190,6 @@ class SPS30_I2C(SPS30):
 
         if retry:
             pass # implement retries with appropriate exception handling
-
-    def _read_version(self):
-        self._sps30_command(self._CMD_READ_VERSION, rx_size=3)
-        self._buffer_check(3)
-        return (self._buffer[0], self._buffer[1])
 
     def _read_into_buffer(self):
         data_len = self._m_total_size
@@ -203,6 +219,7 @@ class SPS30_I2C(SPS30):
             if (self._buffer[st_chunk + 2] != self._crc8(self._buffer,
                                                          st_chunk, st_chunk + 2)):
                 raise RuntimeError("CRC mismatch in data at offset " + str(st_chunk))
+
 
     @staticmethod
     def _crc8(buffer, start=None, end=None):
