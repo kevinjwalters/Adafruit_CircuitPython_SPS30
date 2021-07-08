@@ -105,7 +105,9 @@ class SPS30_I2C(SPS30):
            This will already have been called by constructor
            if auto_start is left to default value."""
         request_fp = self._fp_mode if use_floating_point is None else use_floating_point
-        output_format = 0x0300 if request_fp else 0x0500
+        # Datasheet appears to be wrong/misleading here suggesting wire
+        # data is [0x30, 0x00] and [0x50, 0x00] (order is transposed)
+        output_format = 0x0003 if request_fp else 0x0005
         self._sps30_command(self._CMD_START_MEASUREMENT,
                             arguments=(output_format,),
                             rx_size=0)
