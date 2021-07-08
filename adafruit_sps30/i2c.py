@@ -116,13 +116,6 @@ class SPS30_I2C(SPS30):
         if self._delays:
             time.sleep(0.020)
 
-    def _set_fp_mode(self, use_floating_point):
-        self._fp_mode = use_floating_point
-        self._m_size = 6 if self._fp_mode else 3
-        self._m_total_size = len(self.FIELD_NAMES) * self._m_size
-        self._m_parse_size = len(self.FIELD_NAMES) * (self._m_size * 2 // 3)
-        self._m_fmt = ">" + ("f" if self._fp_mode else "H") * len(self.FIELD_NAMES)
-
     def stop(self):
         """Send stop command to SPS30."""
         self._sps30_command(self._CMD_STOP_MEASUREMENT,
@@ -137,6 +130,14 @@ class SPS30_I2C(SPS30):
         # Data sheet states command execution time < 100ms
         if self._delays:
             time.sleep(0.100)
+
+
+    def _set_fp_mode(self, use_floating_point):
+        self._fp_mode = use_floating_point
+        self._m_size = 6 if self._fp_mode else 3
+        self._m_total_size = len(self.FIELD_NAMES) * self._m_size
+        self._m_parse_size = len(self.FIELD_NAMES) * (self._m_size * 2 // 3)
+        self._m_fmt = ">" + ("f" if self._fp_mode else "H") * len(self.FIELD_NAMES)
 
     def _sps30_command(self, command, arguments=None,
                        *,
