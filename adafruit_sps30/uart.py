@@ -59,6 +59,7 @@ class SPS30_UART:
                 time.sleep(1)
 
     """
+
     # pylint: disable=too-few-public-methods
     def __init__(self, uart):
 

@@ -42,6 +42,7 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_SPS30.git"
 
 SPS30_DEFAULT_ADDR = 0x69
 
+
 class SPS30_I2C(SPS30):
     """
     CircuitPython helper class for using the Sensirion SPS30 particulate matter sensor
@@ -78,11 +79,15 @@ class SPS30_I2C(SPS30):
 
     """
 
-    def __init__(self, i2c_bus, address=SPS30_DEFAULT_ADDR,
-                 *,
-                 auto_start=True,
-                 fp_mode=False,  # fp_mode selection is buggy, end 30 bytes are 0xff
-                 delays=True):
+    def __init__(
+        self,
+        i2c_bus,
+        address=SPS30_DEFAULT_ADDR,
+        *,
+        auto_start=True,
+        fp_mode=False,  # fp_mode selection is buggy, end 30 bytes are 0xff
+        delays=True
+    ):
         super().__init__()
         self._buffer = bytearray(60)  # 10*(4+2)
         self.i2c_device = i2c_device.I2CDevice(i2c_bus, address)
@@ -102,12 +107,11 @@ class SPS30_I2C(SPS30):
 
     def start(self, use_floating_point=None):
         """Send start command to the SPS30.
-           This will already have been called by constructor
-           if auto_start is left to default value."""
+        This will already have been called by constructor
+        if auto_start is left to default value."""
         request_fp = self._fp_mode if use_floating_point is None else use_floating_point
         output_format = 0x0300 if request_fp else 0x0500
-        self._sps30_command(self._CMD_START_MEASUREMENT,
-                            arguments=(output_format,))
+        self._sps30_command(self._CMD_START_MEASUREMENT, arguments=(output_format,))
         self._set_fp_mode(request_fp)
         # Data sheet states command execution time < 20ms
         if self._delays:
@@ -152,7 +156,6 @@ class SPS30_I2C(SPS30):
 
         return ready
 
-
     def _set_fp_mode(self, use_floating_point):
         self._fp_mode = use_floating_point
         self._m_size = 6 if self._fp_mode else 3
@@ -160,9 +163,9 @@ class SPS30_I2C(SPS30):
         self._m_parse_size = len(self.FIELD_NAMES) * (self._m_size * 2 // 3)
         self._m_fmt = ">" + ("f" if self._fp_mode else "H") * len(self.FIELD_NAMES)
 
-    def _sps30_command(self, command, arguments=None,
-                       *,
-                       rx_size=0, retry=SPS30.DEFAULT_RETRIES):
+    def _sps30_command(
+        self, command, arguments=None, *, rx_size=0, retry=SPS30.DEFAULT_RETRIES
+    ):
         """Set rx_size to None to read arbitrary amount of data up to max of _buffer size"""
         self._cmd_buffer[0] = (command >> 8) & 0xFF
         self._cmd_buffer[1] = command & 0xFF
@@ -175,9 +178,9 @@ class SPS30_I2C(SPS30):
                 tx_size += 1
                 self._cmd_buffer[tx_size] = arg & 0xFF
                 tx_size += 1
-                self._cmd_buffer[tx_size] = self._crc8(self._cmd_buffer,
-                                                       start=tx_size - 2,
-                                                       end=tx_size)
+                self._cmd_buffer[tx_size] = self._crc8(
+                    self._cmd_buffer, start=tx_size - 2, end=tx_size
+                )
                 tx_size += 1
 
         # The write_then_readinto method cannot be used as the SPS30
@@ -189,7 +192,7 @@ class SPS30_I2C(SPS30):
                 i2c.readinto(self._buffer, end=rx_size)
 
         if retry:
-            pass # implement retries with appropriate exception handling
+            pass  # implement retries with appropriate exception handling
 
     def _read_into_buffer(self):
         data_len = self._m_total_size
@@ -200,15 +203,14 @@ class SPS30_I2C(SPS30):
         # scrunch up the data
         dst_idx = 2
         for src_idx in range(3, raw_data_len, 3):
-            self._buffer[dst_idx:dst_idx + 2] = self._buffer[src_idx:src_idx + 2]
+            self._buffer[dst_idx : dst_idx + 2] = self._buffer[src_idx : src_idx + 2]
             dst_idx += 2
 
     def _read_parse_data(self, output):
         self._scrunch_buffer(self._m_total_size)
 
         # buffer will be longer than the data hence the use of unpack_from
-        for key, val in zip(self.FIELD_NAMES,
-                        unpack_from(self._m_fmt, self._buffer)):
+        for key, val in zip(self.FIELD_NAMES, unpack_from(self._m_fmt, self._buffer)):
             output[key] = val
 
     def _buffer_check(self, raw_data_len):
@@ -216,16 +218,17 @@ class SPS30_I2C(SPS30):
             raise RuntimeError("Data length not a multiple of three")
 
         for st_chunk in range(0, raw_data_len, 3):
-            if (self._buffer[st_chunk + 2] != self._crc8(self._buffer,
-                                                         st_chunk, st_chunk + 2)):
+            if self._buffer[st_chunk + 2] != self._crc8(
+                self._buffer, st_chunk, st_chunk + 2
+            ):
                 raise RuntimeError("CRC mismatch in data at offset " + str(st_chunk))
-
 
     @staticmethod
     def _crc8(buffer, start=None, end=None):
         crc = 0xFF
-        for idx in range(0 if start is None else start,
-                         len(buffer) if end is None else end):
+        for idx in range(
+            0 if start is None else start, len(buffer) if end is None else end
+        ):
             crc ^= buffer[idx]
             for _ in range(8):
                 if crc & 0x80:
