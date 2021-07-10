@@ -40,6 +40,8 @@ class SPS30:
         * Subclasses must implement _read_into_buffer and _read_parse_data
         * The dictionary returned by read will be changed by the next read.
         * The units for particles values are number per cubic centimetre (not ppm).
+        * The units for Typical Particle Size (tps) are nm for integer
+          and um for floating-point.
     """
 
     FIELD_NAMES = (
