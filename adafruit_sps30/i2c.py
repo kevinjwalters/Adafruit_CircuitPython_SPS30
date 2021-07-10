@@ -98,21 +98,27 @@ class SPS30_I2C(SPS30):
         self._m_total_size = None
         self._m_fmt = None
         self._delays = delays
-        self._set_fp_mode(fp_mode)
+        self._set_fp_mode_fields(fp_mode)
 
         if auto_start:
             self.start(fp_mode)
 
         self.firmware_version = self.read_firmware_version()
 
-    def start(self, use_floating_point=None):
+    def start(self, use_floating_point=None, *, stop_first=True):
         """Send start command to the SPS30.
         This will already have been called by constructor
-        if auto_start is left to default value."""
+        if auto_start is left to default value.
+        if stop_first is True (default value) a stop will be send first.
+        A stop is required if the device has previously been started
+        with a different use_floating_point mode.
+        """
+        if stop_first:
+            self.stop()
         request_fp = self._fp_mode if use_floating_point is None else use_floating_point
         output_format = 0x0300 if request_fp else 0x0500
         self._sps30_command(self._CMD_START_MEASUREMENT, arguments=(output_format,))
-        self._set_fp_mode(request_fp)
+        self._set_fp_mode_fields(request_fp)
         # Data sheet states command execution time < 20ms
         if self._delays:
             time.sleep(0.020)
@@ -139,7 +145,11 @@ class SPS30_I2C(SPS30):
 
     def read_status_register(self):
         """Read 32bit status register."""
-        self._sps30_command(self._CMD_READ_DEVICE_STATUS_REG, rx_size=6)
+        # The datasheet does not indicate a delay is required between write
+        # and read but the Sensirion library does this for some reason
+        # https://github.com/Sensirion/embedded-sps/blob/master/sps30-i2c/sps30.c
+        # https://github.com/Sensirion/arduino-sps/blob/master/sps30.cpp
+        self._sps30_command(self._CMD_READ_DEVICE_STATUS_REG, rx_size=6, delay=0.005)
         self._buffer_check(6)
         self._scrunch_buffer(6)
         return unpack_from(">I", self._buffer)[0]
@@ -156,7 +166,7 @@ class SPS30_I2C(SPS30):
 
         return ready
 
-    def _set_fp_mode(self, use_floating_point):
+    def _set_fp_mode_fields(self, use_floating_point):
         self._fp_mode = use_floating_point
         self._m_size = 6 if self._fp_mode else 3
         self._m_total_size = len(self.FIELD_NAMES) * self._m_size
@@ -164,7 +174,13 @@ class SPS30_I2C(SPS30):
         self._m_fmt = ">" + ("f" if self._fp_mode else "H") * len(self.FIELD_NAMES)
 
     def _sps30_command(
-        self, command, arguments=None, *, rx_size=0, retry=SPS30.DEFAULT_RETRIES
+        self,
+        command,
+        arguments=None,
+        *,
+        rx_size=0,
+        retry=SPS30.DEFAULT_RETRIES,
+        delay=0
     ):
         """Set rx_size to None to read arbitrary amount of data up to max of _buffer size"""
         self._cmd_buffer[0] = (command >> 8) & 0xFF
@@ -188,6 +204,8 @@ class SPS30_I2C(SPS30):
         # This is probably due to lack of support for i2c repeated start
         with self.i2c_device as i2c:
             i2c.write(self._cmd_buffer, end=tx_size)
+            if delay:
+                time.sleep(delay)
             if rx_size != 0:
                 i2c.readinto(self._buffer, end=rx_size)
 
@@ -200,7 +218,9 @@ class SPS30_I2C(SPS30):
         self._buffer_check(data_len)
 
     def _scrunch_buffer(self, raw_data_len):
-        # scrunch up the data
+        """Move all the data from 0:raw_data_len to one contiguous sequence at
+        the start of the buffer.
+        This will overwrite some of the interleaved crcs."""
         dst_idx = 2
         for src_idx in range(3, raw_data_len, 3):
             self._buffer[dst_idx : dst_idx + 2] = self._buffer[src_idx : src_idx + 2]
