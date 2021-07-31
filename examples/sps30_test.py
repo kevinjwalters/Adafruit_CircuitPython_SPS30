@@ -21,14 +21,19 @@ DELAYS = (5.0, 2.0, 1.0, 0.1, 0.0, 0.0)
 DEF_READS = len(DELAYS)
 PM_PREFIXES = ("pm10", "pm25", "pm40", "pm100")
 
+
 def some_reads(sps, num=DEF_READS):
     """Read and print out some values from the sensor which could be
     integers or floating-point values."""
-    print("PM1\tPM2.5\tPM4\tPM10")
+
+    output_header = True
     last_idx = min(len(DELAYS), num) - 1
     for idx in range(last_idx + 1):
         data = sps.read()
-        #print(data)
+        if output_header:
+            print("PM1\tPM2.5\tPM4\tPM10")
+            output_header = False
+        # print(data)
         print("{}\t{}\t{}\t{}".format(*[data[pm + " standard"] for pm in PM_PREFIXES]))
         if idx != last_idx:
             time.sleep(DELAYS[idx])
@@ -38,10 +43,16 @@ def some_reads(sps, num=DEF_READS):
     for field in sps.FIELD_NAMES:
         print("{:s}: {}".format(field, data[field]))
 
+
 print()
 print("Reminder: tps units are different between integer and floating-point modes")
 print("Note: bogus data / bogus CRC errors for around one second after mode change")
 print()
+
+# To allow a human to grab the serial console
+# after a power up to capture the data
+print("Sleeping for 20 seconds")
+time.sleep(20)
 
 # SPS30 works up to 100kHz
 print("BEGIN TEST")
@@ -91,7 +102,13 @@ print("Data available:", got_data)
 print("Six more reads")
 some_reads(sps30_fp)
 
-# TODO - reset
+print("Reset (goes to idle mode)")
+sps30_fp.reset()
+print("Start")
+sps30_fp.start()
+print("Six reads after reset+start")
+some_reads(sps30_fp)
+
 
 print("END TEST")
 time.sleep(6)
