@@ -33,9 +33,11 @@ while True:
     print()
     print("Concentration Units (standard)")
     print("---------------------------------------")
-    print("PM 1.0: {}\tPM2.5: {}\tPM10: {}".format(aqdata["pm10 standard"],
-                                                   aqdata["pm25 standard"],
-                                                   aqdata["pm100 standard"]))
+    print(
+        "PM 1.0: {}\tPM2.5: {}\tPM10: {}".format(
+            aqdata["pm10 standard"], aqdata["pm25 standard"], aqdata["pm100 standard"]
+        )
+    )
     print("Concentration Units (number count)")
     print("---------------------------------------")
     print("Particles 0.3-0.5um  / cm3:", aqdata["particles 05um"])
