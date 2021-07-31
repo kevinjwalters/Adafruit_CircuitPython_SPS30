@@ -166,7 +166,7 @@ class SPS30_I2C(SPS30):
         # and read but the Sensirion library does this for some reason
         # https://github.com/Sensirion/embedded-sps/blob/master/sps30-i2c/sps30.c
         # https://github.com/Sensirion/arduino-sps/blob/master/sps30.cpp
-        self._sps30_command(self._CMD_READ_DEVICE_STATUS_REG, rx_size=6, delay=0.005)
+        self._sps30_command(self._CMD_READ_DEVICE_STATUS_REG, rx_size=6)
         self._buffer_check(6)
         self._scrunch_buffer(6)
         return unpack_from(">I", self._buffer)[0]
