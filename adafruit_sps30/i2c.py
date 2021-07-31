@@ -105,6 +105,19 @@ class SPS30_I2C(SPS30):
 
         self.firmware_version = self.read_firmware_version()
 
+    @property
+    def data_available(self):
+        """Boolean indicating if data is available or None for invalid response."""
+        self._sps30_command(self._CMD_DATA_READY, rx_size=3)
+        self._buffer_check(3)
+        ready = None
+        if self._buffer[1] == 0x00:
+            ready = False
+        elif self._buffer[1] == 0x01:
+            ready = True
+
+        return ready
+
     def start(self, use_floating_point=None, *, stop_first=True):
         """Send start command to the SPS30.
         This will already have been called by constructor
@@ -112,6 +125,8 @@ class SPS30_I2C(SPS30):
         if stop_first is True (default value) a stop will be send first.
         A stop is required if the device has previously been started
         with a different use_floating_point mode.
+        Bogus data may be sent by the sensor for approximately one second after
+        changing the number format and this may cause CRC errors.
         """
         if stop_first:
             self.stop()
@@ -131,7 +146,9 @@ class SPS30_I2C(SPS30):
             time.sleep(0.020)
 
     def reset(self):
-        """Perform a soft reset on the SPS30, restoring default values"""
+        """Perform a soft reset on the SPS30, restoring default values
+        and placing sensor in Idle mode as if it had just powered up.
+        The sensor must be started after a reset before data is read."""
         self._sps30_command(self._CMD_SOFT_RESET)
         # Data sheet states command execution time < 100ms
         if self._delays:
@@ -153,18 +170,6 @@ class SPS30_I2C(SPS30):
         self._buffer_check(6)
         self._scrunch_buffer(6)
         return unpack_from(">I", self._buffer)[0]
-
-    def data_available(self):
-        """Boolean indicating if data is available or None for invalid response."""
-        self._sps30_command(self._CMD_DATA_READY, rx_size=3)
-        self._buffer_check(3)
-        ready = None
-        if self._buffer[1] == 0x00:
-            ready = False
-        elif self._buffer[1] == 0x01:
-            ready = True
-
-        return ready
 
     def _set_fp_mode_fields(self, use_floating_point):
         self._fp_mode = use_floating_point

@@ -94,7 +94,7 @@ sps30_fp.start()
 start_t = time.monotonic()
 while True:
     now_t = time.monotonic()
-    got_data = sps30_fp.data_available()
+    got_data = sps30_fp.data_available
     if got_data or now_t - start_t > 30.0:
         break
 print("Time since start: ", now_t - start_t)
