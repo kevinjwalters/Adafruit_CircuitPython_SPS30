@@ -84,7 +84,7 @@ class SPS30_I2C(SPS30):
         i2c_bus,
         address=SPS30_DEFAULT_ADDR,
         *,
-        auto_start=True,
+        auto_init=True,
         fp_mode=False,  # fp_mode selection is buggy, end 30 bytes are 0xff
         delays=True
     ):
@@ -100,7 +100,9 @@ class SPS30_I2C(SPS30):
         self._delays = delays
         self._set_fp_mode_fields(fp_mode)
 
-        if auto_start:
+        if auto_init:
+            # Send wake-up in case device was left in low power sleep mode
+            self.wakeup()
             self.start(fp_mode)
 
         self.firmware_version = self.read_firmware_version()
@@ -153,6 +155,26 @@ class SPS30_I2C(SPS30):
         # Data sheet states command execution time < 100ms
         if self._delays:
             time.sleep(0.100)
+
+    def sleep(self):
+        """Enters the Sleep-Mode with minimum power consumption."""
+        self._sps30_command(self._CMD_SLEEP)
+        # Data sheet states command execution time < 5ms
+        if self._delays:
+            time.sleep(0.005)
+
+    def wakeup(self):
+        """Switch from Sleep-Mode to Idle-Mode."""
+        # Data sheet has two methods to wake-up, one way is to
+        # intentionally send two consecutive wake-up commands
+        try:
+            self._sps30_command(self._CMD_WAKEUP)
+        except OSError:
+            pass  # ignore any Errno 19 for first command
+        self._sps30_command(self._CMD_WAKEUP)
+        # Data sheet states command execution time < 5ms
+        if self._delays:
+            time.sleep(0.005)
 
     def read_firmware_version(self):
         """Read firmware version returning as two element tuple."""

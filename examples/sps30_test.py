@@ -109,6 +109,23 @@ sps30_fp.start()
 print("Six reads after reset+start")
 some_reads(sps30_fp)
 
+print("Stop / Sleep / 10 second pause / Wake-up")
+sps30_fp.stop()
+sps30_fp.sleep()
+time.sleep(5)
+got_data = False
+try:
+    got_data = sps30_fp.data_available
+    if got_data:
+        print("Data available during sleep mode: BAD BAD BAD!")
+except OSError:
+    # this seems to happen in sleep mode
+    # OSError: [Errno 19] Unsupported operation
+    pass
+time.sleep(5)
+sps30_fp.wakeup()
+print("Six reads after wakeup")
+some_reads(sps30_fp)
 
 print("END TEST")
 time.sleep(6)
