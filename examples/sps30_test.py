@@ -46,7 +46,9 @@ def some_reads(sps, num=DEF_READS):
 
 print()
 print("Reminder: tps units are different between integer and floating-point modes")
-print("Note: bogus data / bogus CRC errors for around one second after mode change")
+# Bogus data / bogus CRC errors for around one second after mode change are
+# inhibited by default mode_change_delay=1.5 in SPS30_I2C constructor
+# measured at 0.98 seconds, 1.5 is more conservative value
 print()
 
 # To allow a human to grab the serial console
@@ -58,12 +60,13 @@ time.sleep(20)
 print("BEGIN TEST")
 i2c = busio.I2C(board.SCL, board.SDA, frequency=100_000)
 print("Creating SPS30_I2C defaults")
-sps30_int = SPS30_I2C(i2c)
+sps30_int = SPS30_I2C(i2c, fp_mode=False)
 fw_ver = sps30_int.firmware_version
 print("Firmware version: {:d}.{:d}".format(fw_ver[0], fw_ver[1]))
 print("Six reads in integer mode")
 some_reads(sps30_int)
 del sps30_int
+
 
 print("Creating SPS30_I2C fp_mode=True")
 sps30_fp = SPS30_I2C(i2c, fp_mode=True)

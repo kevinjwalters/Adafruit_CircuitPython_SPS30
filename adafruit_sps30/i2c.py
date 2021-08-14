@@ -85,8 +85,9 @@ class SPS30_I2C(SPS30):
         address=SPS30_DEFAULT_ADDR,
         *,
         auto_init=True,
-        fp_mode=False,  # fp_mode selection is buggy, end 30 bytes are 0xff
-        delays=True
+        fp_mode=True,
+        delays=True,
+        mode_change_delay=1.5
     ):
         super().__init__()
         self._buffer = bytearray(60)  # 10*(4+2)
@@ -94,11 +95,13 @@ class SPS30_I2C(SPS30):
         self._cmd_buffer = bytearray(2 + 6)
 
         self._fp_mode = None
+        self._mode_change_delay = mode_change_delay
         self._m_size = None
         self._m_total_size = None
         self._m_fmt = None
         self._delays = delays
-        self._set_fp_mode_fields(fp_mode)
+        self._starts = 0
+        _ = self._set_fp_mode_fields(fp_mode)
 
         if auto_init:
             # Send wake-up in case device was left in low power sleep mode
@@ -135,10 +138,13 @@ class SPS30_I2C(SPS30):
         request_fp = self._fp_mode if use_floating_point is None else use_floating_point
         output_format = 0x0300 if request_fp else 0x0500
         self._sps30_command(self._CMD_START_MEASUREMENT, arguments=(output_format,))
-        self._set_fp_mode_fields(request_fp)
+        mode_changed = self._set_fp_mode_fields(request_fp)
         # Data sheet states command execution time < 20ms
         if self._delays:
             time.sleep(0.020)
+            if (mode_changed or self._starts == 0) and self._mode_change_delay:
+                time.sleep(self._mode_change_delay)
+        self._starts += 1
 
     def stop(self):
         """Send stop command to SPS30."""
@@ -194,11 +200,14 @@ class SPS30_I2C(SPS30):
         return unpack_from(">I", self._buffer)[0]
 
     def _set_fp_mode_fields(self, use_floating_point):
+        if self._fp_mode == use_floating_point:
+            return False
         self._fp_mode = use_floating_point
         self._m_size = 6 if self._fp_mode else 3
         self._m_total_size = len(self.FIELD_NAMES) * self._m_size
         self._m_parse_size = len(self.FIELD_NAMES) * (self._m_size * 2 // 3)
         self._m_fmt = ">" + ("f" if self._fp_mode else "H") * len(self.FIELD_NAMES)
+        return True
 
     def _sps30_command(
         self,
