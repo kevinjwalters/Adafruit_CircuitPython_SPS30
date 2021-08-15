@@ -114,7 +114,7 @@ class SPS30_I2C(SPS30):
     @property
     def data_available(self):
         """Boolean indicating if data is available or None for invalid response."""
-        self._sps30_command(self._CMD_DATA_READY, rx_size=3)
+        self._sps30_command(self._CMD_READ_DATA_READY_FLAG, rx_size=3)
         self._buffer_check(3)
         ready = None
         if self._buffer[1] == 0x00:
@@ -123,6 +123,33 @@ class SPS30_I2C(SPS30):
             ready = True
 
         return ready
+
+    @property
+    def auto_cleaning_interval(self):
+        """Read the auto cleaning interval."""
+        self._sps30_command(self._CMD_RW_AUTO_CLEANING_INTERVAL, rx_size=6)
+        self._buffer_check(6)
+        self._scrunch_buffer(6)
+        if self._delays:
+            time.sleep(0.005)
+        return unpack_from(">I", self._buffer)[0]
+
+    @auto_cleaning_interval.setter
+    def auto_cleaning_interval(self, value):
+        """Write the auto cleaning interval in seconds to SPS30 nvram (0 disables feature).
+
+        Data sheet notes for firmware before verison 2.2:
+        "After writing a new interval, this will be activated immediately.
+         However, if the interval register is read out after setting the
+         new value, the previous value is returned until the next
+         start/reset of the sensor module."
+        """
+        self._sps30_command(
+            self._CMD_RW_AUTO_CLEANING_INTERVAL,
+            arguments=((value >> 16) & 0xFFFF, value & 0xFFFF),
+        )
+        if self._delays:
+            time.sleep(0.020)
 
     def start(self, use_floating_point=None, *, stop_first=True):
         """Send start command to the SPS30.
@@ -199,6 +226,13 @@ class SPS30_I2C(SPS30):
         self._buffer_check(6)
         self._scrunch_buffer(6)
         return unpack_from(">I", self._buffer)[0]
+
+    def clear_status_register(self):
+        """Clear 32bit status register."""
+        self._sps30_command(self._CMD_CLEAR_DEVICE_STATUS_REG)
+        # Data sheet states command execution time < 5ms
+        if self._delays:
+            time.sleep(0.005)
 
     def _set_fp_mode_fields(self, use_floating_point):
         if self._fp_mode == use_floating_point:
