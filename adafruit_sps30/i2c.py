@@ -174,6 +174,16 @@ class SPS30_I2C(SPS30):
                 time.sleep(self._mode_change_delay)
         self._starts += 1
 
+    def clean(self, *, wait=10):
+        """Start the fan cleaning and wait 10 seconds for it to complete.
+
+        Firmware 2.2 sets bit 19 of status register during this operation -
+        this is undocumented behaviour.
+        """
+        self._sps30_command(self._CMD_START_FAN_CLEANING)
+        if wait:
+            time.sleep(wait)
+
     def stop(self):
         """Send stop command to SPS30."""
         self._sps30_command(self._CMD_STOP_MEASUREMENT)
