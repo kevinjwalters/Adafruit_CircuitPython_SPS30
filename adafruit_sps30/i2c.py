@@ -79,6 +79,7 @@ class SPS30_I2C(SPS30):
 
     """
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         i2c_bus,
