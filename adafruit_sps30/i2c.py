@@ -48,12 +48,12 @@ class SPS30_I2C(SPS30):
     CircuitPython helper class for using the Sensirion SPS30 particulate matter sensor
     over the i2c interface.
 
-    :param ~busio.I2C i2c_bus: The I2C bus the SCD30 is connected to.
+    :param ~busio.I2C i2c_bus: The I2C bus the SPS30 is connected to.
     :param int address: The I2C device address for the sensor. Default is :const:`0x69`
 
-    **Quickstart: Importing and using the SCD30**
+    **Quickstart: Importing and using the SPS30**
 
-        Here is an example of using the :class:`SPS30` class.
+        Here is an example of using the i2c sub-class of the :class:`SPS30` class.
         First you will need to import the libraries to use the sensor
 
         .. code-block:: python
@@ -174,15 +174,16 @@ class SPS30_I2C(SPS30):
                 time.sleep(self._mode_change_delay)
         self._starts += 1
 
-    def clean(self, *, wait=10):
-        """Start the fan cleaning and wait 10 seconds for it to complete.
+    def clean(self, *, wait=True):
+        """Start the fan cleaning and wait 15 seconds for it to complete.
 
         Firmware 2.2 sets bit 19 of status register during this operation -
         this is undocumented behaviour.
         """
         self._sps30_command(self._CMD_START_FAN_CLEANING)
         if wait:
-            time.sleep(wait)
+            delay = self.FAN_CLEAN_TIME if wait is True else wait
+            time.sleep(delay)
 
     def stop(self):
         """Send stop command to SPS30."""
