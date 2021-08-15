@@ -22,6 +22,7 @@ DEF_READS = len(DELAYS)
 PM_PREFIXES = ("pm10", "pm25", "pm40", "pm100")
 TEST_VERSION = "1.2"
 
+
 def some_reads(sps, num=DEF_READS):
     """Read and print out some values from the sensor which could be
     integers or floating-point values."""
