@@ -15,8 +15,7 @@ Implementation Notes
 
 **Hardware:**
 
-* `Sensirion SPS30
-   <https://www.sensirion.com/en/environmental-sensors/particulate-matter-sensors-pm25/>`_
+* `Sensirion SPS30 <https://www.sensirion.com/en/environmental-sensors/particulate-matter-sensors-pm25/>`_
 
 **Software and Dependencies:**
 
