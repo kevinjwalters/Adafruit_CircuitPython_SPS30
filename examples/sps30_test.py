@@ -20,7 +20,7 @@ from adafruit_sps30.i2c import SPS30_I2C
 DELAYS = (5.0, 2.0, 1.0, 0.1, 0.0, 0.0)
 DEF_READS = len(DELAYS)
 PM_PREFIXES = ("pm10", "pm25", "pm40", "pm100")
-
+TEST_VERSION = "1.2"
 
 def some_reads(sps, num=DEF_READS):
     """Read and print out some values from the sensor which could be
@@ -57,7 +57,7 @@ print("Sleeping for 20 seconds")
 time.sleep(20)
 
 # SPS30 works up to 100kHz
-print("BEGIN TEST")
+print("BEGIN TEST sps30_test version", TEST_VERSION)
 i2c = busio.I2C(board.SCL, board.SDA, frequency=100_000)
 print("Creating SPS30_I2C defaults")
 sps30_int = SPS30_I2C(i2c, fp_mode=False)
@@ -112,7 +112,7 @@ sps30_fp.start()
 print("Six reads after reset+start")
 some_reads(sps30_fp)
 
-print("Stop / Sleep / 10 second pause / Wake-up")
+print("Stop / Sleep / 10 second pause / Wake-up / Start")
 sps30_fp.stop()
 sps30_fp.sleep()
 time.sleep(5)
@@ -126,8 +126,24 @@ except OSError:
     # OSError: [Errno 19] Unsupported operation
     pass
 time.sleep(5)
-sps30_fp.wakeup()
-print("Six reads after wakeup")
+sps30_fp.wakeup()  # transitions back to "Idle" mode
+sps30_fp.start()  # needed to return to "Measurement" mode
+print("Six reads after wakeup and start")
+some_reads(sps30_fp)
+print("Six more reads after wakeup and start")
+some_reads(sps30_fp)
+
+# data sheet implies this takes 10 seconds but more like 14
+print("Fan clean (the speed up is audible)")
+sps30_fp.clean(wait=4)
+for _ in range(2 * (10 - 4 + 15)):
+    cleaning = bool(sps30_fp.read_status_register() & sps30_fp.STATUS_FAN_CLEANING)
+    print("c" if cleaning else ".", end="")
+    if not cleaning:
+        break
+    time.sleep(0.5)
+print()
+print("Six reads after clean")
 some_reads(sps30_fp)
 
 print("END TEST")
