@@ -21,19 +21,9 @@ Table of Contents
     api
 
 .. toctree::
-    :caption: Tutorials
-
-    Adafruit SCD30 Breakout Learning Guide <https://learn.adafruit.com/adafruit-scd30>
-
-.. toctree::
-    :caption: Related Products
-
-    Adafruit SCD30 Breakout <https://www.adafruit.com/product/4867>
-
-.. toctree::
     :caption: Other Links
 
-    Download <https://github.com/adafruit/Adafruit_CircuitPython_SCD30/releases/latest>
+    Download <https://github.com/adafruit/Adafruit_CircuitPython_SPS30/releases/latest>
     CircuitPython Reference Documentation <https://circuitpython.readthedocs.io>
     CircuitPython Support Forum <https://forums.adafruit.com/viewforum.php?f=60>
     Discord Chat <https://adafru.it/discord>

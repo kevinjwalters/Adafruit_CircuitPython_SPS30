@@ -52,9 +52,9 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Adafruit SCD30 Library"
-copyright = "2020 Bryan Siepert"
-author = "Bryan Siepert"
+project = "Adafruit SPS30 Library"
+copyright = "2021 Kevin J. Walters"
+author = "Kevin J. Walters"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -134,7 +134,7 @@ html_static_path = ["_static"]
 html_favicon = "_static/favicon.ico"
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "AdafruitScd30Librarydoc"
+htmlhelp_basename = "AdafruitSps30Librarydoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -155,8 +155,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "AdafruitSCD30Library.tex",
-        "AdafruitSCD30 Library Documentation",
+        "AdafruitSPS30Library.tex",
+        "AdafruitSPS30 Library Documentation",
         author,
         "manual",
     ),
@@ -169,8 +169,8 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        "AdafruitSCD30library",
-        "Adafruit SCD30 Library Documentation",
+        "AdafruitSPS30library",
+        "Adafruit SPS30 Library Documentation",
         [author],
         1,
     ),
@@ -184,10 +184,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "AdafruitSCD30Library",
-        "Adafruit SCD30 Library Documentation",
+        "AdafruitSPS30Library",
+        "Adafruit SPS30 Library Documentation",
         author,
-        "AdafruitSCD30Library",
+        "AdafruitSPS30Library",
         "One line description of project.",
         "Miscellaneous",
     ),
