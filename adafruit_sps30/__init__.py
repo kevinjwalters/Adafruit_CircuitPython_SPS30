@@ -42,6 +42,10 @@ class SPS30:
         * The units for particles values are number per cubic centimetre (not ppm).
         * The units for Typical Particle Size (tps) are nm for integer
           and um for floating-point.
+        * Field names follow the standard set by the adafruit_pm25 library
+          omitting the decimal point in the numerical values, e.g.
+          PM2.5 standard is represented by "pm25" and "25um",
+          PM10 standard is represented by "pm100" and "100um".
     """
 
     FIELD_NAMES = (
