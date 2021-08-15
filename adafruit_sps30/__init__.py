@@ -79,6 +79,11 @@ class SPS30:
     _CMD_CLEAR_DEVICE_STATUS_REG = 0xD210  # V2.0
     _CMD_SOFT_RESET = 0xD304
 
+    _STATUS_FAN_ERROR = 1 << 4
+    _STATUS_LASER_ERROR = 1 << 5
+    _STATUS_FAN_CLEANING = 1 << 19
+    _STATUS_FAN_SPEED_WARNING = 1 << 21
+
     _WRONG_CLASS_TXT = "Object must be instantiated as an SPS30_I2C or SPS30_UART"
 
     def __init__(self):
